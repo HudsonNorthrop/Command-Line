@@ -19,3 +19,40 @@ download.file("https://data.ecoforecast.org/targets/beetles/beetles-targets.csv.
               "beetles-targets.csv.gz")
 targets <-  read_csv("beetles-targets.csv.gz")
 ```
+
+Download weather/humidity data
+```{r}
+##Get humidity table
+humidity <- neon_read(table = "wss_daily_humid-basic", product = "DP4.00001.001")
+```
+
+Summarize RH data at the 2-week temporal scale
+```{r}
+##Filter for dates at which there is at least one richness or abundance observation
+dates <- bona %>%
+  mutate("abundance.na" = if_else(is.na(abundance), 1, 0), "richness.na" = if_else(is.na(richness), 1, 0)) %>%
+  mutate("sum.na" = abundance.na + richness.na) %>%
+  filter(sum.na %in% c(0,1)) %>%
+  distinct(date)
+
+#Set up vectors to store 2 week info in
+meanRH <- NULL
+minRH <- NULL
+maxRH <- NULL
+
+#For loop that calculates the 2 week info, based on the last 2 weeks from each beetle measurement
+for(i in 1:length(dates$date)) {
+  a <- filter(bona, date %in% c(dates$date[i]-0:13 ))
+  meanRH[i] <- mean(a$wssRHMean, na.rm = TRUE)
+  minRH[i] <- min(a$wssRHMinimum, na.rm = TRUE)
+  maxRH[i] <- max(a$wssRHMaximum, na.rm = TRUE)
+}
+
+bona_final <- bona %>%
+  mutate("abundance.na" = if_else(is.na(abundance), 1, 0), "richness.na" = if_else(is.na(richness), 1, 0)) %>%
+  mutate("sum.na" = abundance.na + richness.na) %>%
+  filter(sum.na %in% c(0,1)) %>%
+  select(siteID, date, richness, abundance) %>%
+  bind_cols("meanRH" = meanRH,"minRH" =  minRH,"maxRH"= maxRH)
+
+```
