@@ -1,0 +1,21 @@
+---
+title: "Just Practicing"
+author: "HN"
+date: "2/16/2021"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(neonstore)
+library(ISOweek)
+source("R/resolve_taxonomy.R")
+```
+
+
+Get beetle target data
+```{r}
+## Get the latest beetle target data.  
+download.file("https://data.ecoforecast.org/targets/beetles/beetles-targets.csv.gz",
+              "beetles-targets.csv.gz")
+targets <-  read_csv("beetles-targets.csv.gz")
+```
